@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Responsive Memory Game</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #2c3e50;
+      font-family: Arial, sans-serif;
+      color: white;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    label[for="player-name"] {
+      margin-top: 15px;
+      font-size: 16px;
+    }
+
+    input#player-name {
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      margin-top: 5px;
+      text-align: center;
+      width: 200px;
+    }
+
+    #start-btn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #27ae60;
+      color: white;
+      cursor: pointer;
+    }
+
+    #timer {
+      font-size: 16px;
+      margin: 5px 0;
+    }
+
+    #game {
+      display: grid;
+      gap: 5px;
+      margin: 10px 0;
+      width: 90vmin;
+      height: 90vmin;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media screen and (orientation: landscape) {
+      #game {
+        width: 95vw;
+        height: auto;
+        grid-template-columns: repeat(8, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+      }
+    }
+
+    .card {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      perspective: 600px;
+      cursor: pointer;
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transition: transform 0.5s;
+      transform-style: preserve-3d;
+    }
+
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      backface-visibility: hidden;
+    }
+
+    .card-front {
+      background: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transform: rotateY(180deg);
+    }
+
+    .card-front img {
+      width: 90%;
+      height: 90%;
+      object-fit: contain;
+    }
+
+    .card-back {
+      background: #2980b9;
+    }
+
+    #message {
+      font-size: 16px;
+      min-height: 20px;
+      text-align: center;
+    }
+
+    #leaderboard {
+      margin-top: 5px;
+      background: #34495e;
+      border-radius: 8px;
+      padding: 8px;
+      width: 90vw;
+      max-width: 320px;
+      max-height: 20vh;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    #leaderboard h3 {
+      margin: 0 0 5px 0;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    #leaderboard ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #leaderboard li {
+      padding: 4px 0;
+      border-bottom: 1px solid #2c3e50;
+    }
+  </style>
+</head>
+<body>
+
+  <label for="player-name">Enter Your Name:</label>
+  <input type="text" id="player-name" placeholder="Player Name" maxlength="20" />
+  <button id="start-btn">Start Game</button>
+  <div id="timer">Time: 01:00</div>
+  <div id="game"></div>
+  <div id="message"></div>
+
+  <div id="leaderboard">
+    <h3>Leaderboard (Top 10)</h3>
+    <ul id="scoresList"></ul>
+  </div>
+
+  <script>
+    const cardsArray = [
+      'https://i.ibb.co/RVk3JJw/cms.png','https://i.ibb.co/RVk3JJw/cms.png',
+      'https://i.ibb.co/PzmXGGJw/dod.png','https://i.ibb.co/PzmXGGJw/dod.png',
+      'https://i.ibb.co/7dXWQm7t/bib.png','https://i.ibb.co/7dXWQm7t/bib.png',
+      'https://i.ibb.co/FbLQbWVq/clearance.png','https://i.ibb.co/FbLQbWVq/clearance.png',
+      'https://i.ibb.co/DqFYqpn/dollaroff.png','https://i.ibb.co/DqFYqpn/dollaroff.png',
+      'https://i.ibb.co/ZRfKL5Xb/bogo.png','https://i.ibb.co/ZRfKL5Xb/bogo.png',
+      'https://i.ibb.co/Nn2tmTBg/percentoff.png','https://i.ibb.co/Nn2tmTBg/percentoff.png',
+      'https://i.ibb.co/d0t8J6PZ/memberdeal.png','https://i.ibb.co/d0t8J6PZ/memberdeal.png'
+    ];
+
+    const game = document.getElementById('game');
+    const message = document.getElementById('message');
+    const timerDisplay = document.getElementById('timer');
+    const scoresList = document.getElementById('scoresList');
+    const startBtn = document.getElementById('start-btn');
+
+    let flippedCards = [];
+    let matchedCount = 0;
+    let busy = false;
+    let timer = null;
+    let secondsLeft = 60;
+    let playerName = '';
+    let gameStarted = false;
+
+    const STORAGE_KEY = 'memoryGameScores';
+
+    function loadScores() {
+      const scoresJSON = localStorage.getItem(STORAGE_KEY);
+      if (!scoresJSON) return [];
+      try {
+        return JSON.parse(scoresJSON);
+      } catch {
+        return [];
+      }
+    }
+
+    function saveScores(scores) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+    }
+
+    function updateLeaderboard() {
+      const scores = loadScores();
+      if (scores.length === 0) {
+        scoresList.innerHTML = '<li>No scores yet. Play to get on the leaderboard!</li>';
+        return;
+      }
+      scores.sort((a,b) => a.time - b.time);
+      scoresList.innerHTML = '';
+      scores.forEach(({name, time}, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${index+1}. ${name} - ${time} sec`;
+        scoresList.appendChild(li);
+      });
+    }
+
+    function shuffle(array) {
+      for(let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i+1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function createCard(imagePath, index) {
+      const card = document.createElement('div');
+      card.classList.add('card');
+      card.dataset.symbol = imagePath;
+
+      const cardInner = document.createElement('div');
+      cardInner.classList.add('card-inner');
+
+      const cardFront = document.createElement('div');
+      cardFront.classList.add('card-front');
+      const img = document.createElement('img');
+      img.src = imagePath;
+      img.alt = "card image";
+      cardFront.appendChild(img);
+
+      const cardBack = document.createElement('div');
+      cardBack.classList.add('card-back');
+
+      cardInner.appendChild(cardFront);
+      cardInner.appendChild(cardBack);
+      card.appendChild(cardInner);
+
+      card.addEventListener('click', () => {
+        if (!gameStarted) return;
+        if (busy || card.classList.contains('flipped')) return;
+        flipCard(card);
+      });
+
+      return card;
+    }
+
+    function flipCard(card) {
+      if (flippedCards.length === 2) return;
+      card.classList.add('flipped');
+      flippedCards.push(card);
+
+      if (flippedCards.length === 2) {
+        checkMatch();
+      }
+    }
+
+    function checkMatch() {
+      busy = true;
+      const [card1, card2] = flippedCards;
+      if (card1.dataset.symbol === card2.dataset.symbol) {
+        matchedCount += 2;
+        flippedCards = [];
+        busy = false;
+        if (matchedCount === cardsArray.length) {
+          clearInterval(timer);
+          endGame(true);
+        }
+      } else {
+        setTimeout(() => {
+          card1.classList.remove('flipped');
+          card2.classList.remove('flipped');
+          flippedCards = [];
+          busy = false;
+        }, 1000);
+      }
+    }
+
+    function saveScore(name, time) {
+     const scores = loadScores();
+      scores.push({ name, time });
+      scores.sort((a, b) => a.time - b.time);
+      const topScores = scores.slice(0, 10);
+      saveScores(topScores);
+    
+      // ✅ Send to Google Sheets
+      fetch("https://script.google.com/macros/s/AKfycbzCRmhgvkUhe-CdSDtU1F3ifkKT-IPctTJAOaWwa6jvDxv7ARstfXXiG4A-iE2Bxta5/exec", {
+        method: "POST",
+        body: JSON.stringify({ name, time }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Failed to send score to Google Sheets");
+        console.log("Score successfully saved to Google Sheets.");
+      })
+      .catch(error => {
+        console.error("Error saving to Google Sheets:", error);
+      });
+    }
+
+    function startTimer() {
+      secondsLeft = 60;
+      updateTimerDisplay();
+      timer = setInterval(() => {
+        secondsLeft--;
+        updateTimerDisplay();
+        if (secondsLeft <= 0) {
+          clearInterval(timer);
+          endGame(false);
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const min = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+      const sec = String(secondsLeft % 60).padStart(2, '0');
+      timerDisplay.textContent = `Time: ${min}:${sec}`;
+    }
+
+    function initGame() {
+      const input = document.getElementById('player-name');
+      const name = input.value.trim();
+      if (!name) {
+        alert("Please enter your name to start.");
+        return;
+      }
+
+      playerName = name;
+      message.textContent = '';
+      matchedCount = 0;
+      flippedCards = [];
+      busy = false;
+      game.innerHTML = '';
+      gameStarted = true;
+
+      const shuffledCards = shuffle(cardsArray.slice());
+      shuffledCards.forEach((imagePath, index) => {
+        const card = createCard(imagePath, index);
+        game.appendChild(card);
+      });
+
+      startTimer();
+      updateLeaderboard();
+    }
+
+    function endGame(won) {
+      gameStarted = false;
+      if (won) {
+        const timeTaken = 60 - secondsLeft;
+        message.innerHTML = `🎉 Congrats, <b>${playerName}</b>! You won with <b>${timeTaken} seconds</b> elapsed.`;
+        saveScore(playerName, timeTaken); // ✅ Save locally & to Sheets
+        updateLeaderboard();
+      } else {
+        message.textContent = '⏰ Time’s up! Better luck next time.';
+        document.querySelectorAll('.card').forEach(card => {
+          if (!card.classList.contains('flipped')) {
+            card.classList.add('flipped');
+          }
+        });
+      }
+    }
+
+    startBtn.addEventListener('click', () => {
+      if (gameStarted) {
+        if (!confirm("Game is in progress. Restart?")) return;
+        clearInterval(timer);
+      }
+      initGame();
+    });
+
+    updateLeaderboard();
+    updateTimerDisplay();
+  </script>
+</body>
+</html>
