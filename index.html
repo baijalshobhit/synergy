@@ -204,20 +204,26 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
     }
 
-    function updateLeaderboard() {
-      const scores = loadScores();
+  function updateLeaderboard() {
+  fetch("https://script.google.com/macros/s/AKfycbxuvrbDbUznGXe-qBMBCAXqcsheyIUr0o6ExAFFL6LgBNWgOFrhZZ1LyWcNJvbZKqYy/exec")
+    .then(response => response.json())
+    .then(scores => {
+      scoresList.innerHTML = '';
       if (scores.length === 0) {
-        scoresList.innerHTML = '<li>No scores yet. Play to get on the leaderboard!</li>';
+        scoresList.innerHTML = '<li>No scores yet.</li>';
         return;
       }
-      scores.sort((a,b) => a.time - b.time);
-      scoresList.innerHTML = '';
-      scores.forEach(({name, time}, index) => {
+      scores.forEach(({ name, time }, index) => {
         const li = document.createElement('li');
-        li.textContent = `${index+1}. ${name} - ${time} sec`;
+        li.textContent = `${index + 1}. ${name} - ${time} sec`;
         scoresList.appendChild(li);
       });
-    }
+    })
+    .catch(err => {
+      console.error('Failed to fetch leaderboard:', err);
+      scoresList.innerHTML = '<li>Failed to load leaderboard.</li>';
+    });
+}
 
     function shuffle(array) {
       for(let i = array.length - 1; i > 0; i--) {
