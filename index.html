@@ -118,17 +118,27 @@
       text-align: center;
     }
 
-    #leaderboard {
-      margin-top: 5px;
-      background: #34495e;
-      border-radius: 8px;
-      padding: 8px;
-      width: 90vw;
-      max-width: 320px;
-      max-height: 20vh;
-      overflow-y: auto;
-      font-size: 14px;
-    }
+#leaderboard {
+  margin-top: 5px;
+  background: #34495e;
+  border-radius: 8px;
+  padding: 8px;
+  width: 90vw;
+  max-width: 320px;
+  max-height: 40vh; /* Increased from 20vh */
+  overflow-y: auto;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Optional: Improve scroll behavior on mobile */
+#leaderboard::-webkit-scrollbar {
+  width: 6px;
+}
+#leaderboard::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
 
     #leaderboard h3 {
       margin: 0 0 5px 0;
