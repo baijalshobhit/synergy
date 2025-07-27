@@ -195,7 +195,7 @@
     let matchedCount = 0;
     let busy = false;
     let timer = null;
-    let secondsLeft = 60;
+    let secondsLeft = 30;
     let playerName = '';
     let gameStarted = false;
 
@@ -332,7 +332,7 @@
     }
 
     function startTimer() {
-      secondsLeft = 60;
+      secondsLeft = 30;
       updateTimerDisplay();
       timer = setInterval(() => {
         secondsLeft--;
@@ -345,8 +345,8 @@
     }
 
     function updateTimerDisplay() {
-      const min = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
-      const sec = String(secondsLeft % 60).padStart(2, '0');
+      const min = String(Math.floor(secondsLeft / 30)).padStart(2, '0');
+      const sec = String(secondsLeft % 30).padStart(2, '0');
       timerDisplay.textContent = `Time: ${min}:${sec}`;
     }
 
@@ -379,7 +379,7 @@
     function endGame(won) {
       gameStarted = false;
       if (won) {
-        const timeTaken = 60 - secondsLeft;
+        const timeTaken = 30 - secondsLeft;
         message.innerHTML = `🎉 Congrats, <b>${playerName}</b>! You won with <b>${timeTaken} seconds</b> elapsed.`;
         saveScore(playerName, timeTaken); // ✅ Save locally & to Sheets
         updateLeaderboard();
