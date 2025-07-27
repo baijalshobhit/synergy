@@ -205,7 +205,7 @@
     }
 
   function updateLeaderboard() {
-  fetch("https://script.google.com/macros/s/AKfycbxuvrbDbUznGXe-qBMBCAXqcsheyIUr0o6ExAFFL6LgBNWgOFrhZZ1LyWcNJvbZKqYy/exec")
+  fetch("https://script.google.com/macros/s/AKfycbz3knjeXnqJ4B_5NCYt0p5Ur3KXk1zoyeZ0rJVDHi_bKaHzCRjU7le605iKfCgIQN5y/exec")
     .then(response => response.json())
     .then(scores => {
       scoresList.innerHTML = '';
@@ -303,7 +303,7 @@
       saveScores(topScores);
     
       // ✅ Send to Google Sheets
-      fetch("https://script.google.com/macros/s/AKfycbxuvrbDbUznGXe-qBMBCAXqcsheyIUr0o6ExAFFL6LgBNWgOFrhZZ1LyWcNJvbZKqYy/exec", {
+      fetch("https://script.google.com/macros/s/AKfycbz3knjeXnqJ4B_5NCYt0p5Ur3KXk1zoyeZ0rJVDHi_bKaHzCRjU7le605iKfCgIQN5y/exec", {
         method: "POST",
         mode: "no-cors",
         body: JSON.stringify({ name, time }),
