@@ -126,18 +126,19 @@
   width: 90vw;
   max-width: 320px;
   max-height: 40vh; /* Increased from 20vh */
-  overflow-y: auto;
+  overflow-y: scroll; /* instead of auto */
+  -webkit-overflow-scrolling: touch;
   font-size: 14px;
   box-sizing: border-box;
 }
 
 /* Optional: Improve scroll behavior on mobile */
 #leaderboard::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 #leaderboard::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
     #leaderboard h3 {
